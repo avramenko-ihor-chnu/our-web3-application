@@ -9,3 +9,4 @@ axum = "0.8.6"
 tokio = { version = "1.48.0", features = ["full"] }
 tower-http = { version = "0.6.6", features = ["fs"] }
 application = { path = "../application/" }
+serde = { version = "1.0.228", features = ["derive"] }

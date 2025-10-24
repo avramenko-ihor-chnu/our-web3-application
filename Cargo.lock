@@ -145,6 +145,7 @@ dependencies = [
  "application",
  "askama",
  "axum",
+ "serde",
  "tokio",
  "tower-http",
 ]

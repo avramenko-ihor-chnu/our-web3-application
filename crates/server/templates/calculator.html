@@ -1,0 +1,34 @@
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+<table>
+	<thead style="font-weight: bold; color: lightgreen">
+		<tr>
+			<th colspan=2>Will Solana Reach 260 Before 2026</th>
+		</tr>
+		<tr>
+			<th>Bet</th>
+			<th>To get</th>
+		</tr>
+	</thead>
+
+	<tbody>
+		<tr>
+			<th>
+				<input type="number"
+				       name="money"
+				       placeholder="$0"
+				       hx-post="/calculator"
+				       hx-trigger="input changed delay:200ms, keyup[key=='Enter']"
+				       hx-target="#calculation-results"
+				>
+			</th>
+			<th id="calculation-results">$0</th>
+		</tr>
+	</tbody>
+
+	<tfoot style="font-weight: bold; color: pink">
+		<tr>
+			<th colspan=2></th>
+		</tr>
+	</tfoot>
+</table>
+<button disabled>Trade</button>

@@ -1,35 +1,35 @@
-use std::{sync::Arc, time::Duration};
+mod server;
+mod templates;
 
-use application::{ExchangePrices, LamportBalance};
+use crate::server::{ActivePolymarketSearch, ServerState};
+use application::{ExchangePrices, LamportBalance, PolymarketSolana260};
 use askama::Template;
 use axum::{
-    Router,
+    Form, Router,
     extract::{Path, State},
     http::StatusCode,
     response::Html,
-    routing::get,
+    routing::{get, post},
 };
+use std::{sync::Arc, time::Duration};
 use tokio::{fs, sync::RwLock};
 use tower_http::services::ServeDir;
-mod templates;
-
-type SharedExchangePrices = Arc<RwLock<ExchangePrices>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let shared_prices = start_price_updater();
+    let server_state = server_state_updater();
 
     let app = Router::new()
         .route("/", get(index))
-        .route("/hello-world", get(hello_world))
-        .route("/favicon.ico", get(favicon))
-        .route("/crypto-top", get(crypto_top))
         .route("/account/{id}", get(account))
+        .route("/favicon.ico", get(favicon))
+        .route("/calculator", get(calculator_body))
+        .route("/calculator", post(calc))
         .nest_service("/css", ServeDir::new("crates/server/static/css"))
         .nest_service("/images", ServeDir::new("crates/server/static/images"))
         .nest_service("/effects", ServeDir::new("crates/server/static/effects"))
         .nest_service("/static", ServeDir::new("crates/server/static"))
-        .with_state(shared_prices);
+        .with_state(server_state);
 
     let port = std::env::var("PORT").unwrap_or_else(|_| "8081".to_string());
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
@@ -38,11 +38,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+async fn calculator_body() -> Result<Html<String>, StatusCode> {
+    match tokio::fs::read_to_string("crates/server/templates/calculator.html").await {
+        Ok(html) => Ok(Html(html)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+async fn calc(
+    State(ServerState {
+        exchange_prices: _,
+        polymarket_solana260,
+    }): State<ServerState>,
+    Form(ActivePolymarketSearch { money }): Form<ActivePolymarketSearch>,
+) -> Result<Html<String>, StatusCode> {
+    let polymarket_solana260_multiplyer = polymarket_solana260.read().await.answer_no_multiplier;
+    let bet_return = money / polymarket_solana260_multiplyer;
+    let html = format!("{bet_return:.2}$");
+    Ok(Html(html))
+}
+
 async fn account(
-    State(prices): State<SharedExchangePrices>,
+    State(ServerState {
+        exchange_prices,
+        polymarket_solana260: _,
+    }): State<ServerState>,
     Path(id): Path<String>,
 ) -> Result<Html<String>, StatusCode> {
-    let rate = prices.read().await.sol_to_usd;
+    let rate = exchange_prices.read().await.sol_to_usd;
     let lamport_balance = LamportBalance::get(id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -64,47 +87,48 @@ async fn index() -> Result<Html<String>, StatusCode> {
     Ok(Html(index))
 }
 
-async fn hello_world() -> Html<String> {
-    std::thread::sleep(std::time::Duration::from_secs(1)); // 😪
-    Html("🤗Hello World!".to_string())
-}
-
 async fn favicon() -> axum::response::Redirect {
     axum::response::Redirect::permanent("/static/svg/icon.svg")
 }
 
-async fn crypto_top() -> Result<Html<String>, StatusCode> {
-    let html = r#"
-        <h2>Топ 5 криптовалют</h2>
-        <table>
-            <tr><td>1</td><td>Bitcoin</td><td>60000</td></tr>
-            <tr><td>2</td><td>Ethereum</td><td>4000</td></tr>
-        </table>
-    "#;
+fn server_state_updater() -> ServerState {
+    let exchange_prices = Arc::new(RwLock::new(ExchangePrices::new()));
+    let polymarket_solana260 = Arc::new(RwLock::new(PolymarketSolana260::new()));
 
-    Ok(Html(html.to_string()))
-}
-
-pub fn start_price_updater() -> SharedExchangePrices {
-    let prices = Arc::new(RwLock::new(ExchangePrices::new()));
-    let prices_clone = Arc::clone(&prices);
+    let exchange_prices_clone = Arc::clone(&exchange_prices);
+    let polymarket_solana260_clone = Arc::clone(&polymarket_solana260);
 
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(300));
-
+        let mut interval = tokio::time::interval(Duration::from_secs(30));
         loop {
             interval.tick().await;
-
             match ExchangePrices::get_sol_price().await {
-                Ok(new_price) => {
-                    let mut guard = prices_clone.write().await;
-                    guard.sol_to_usd = new_price;
+                Ok(new_exchange_prices) => {
+                    let mut guard = exchange_prices_clone.write().await;
                     guard.last_updated = std::time::SystemTime::now();
+                    guard.sol_to_usd = new_exchange_prices;
                 }
-                Err(e) => eprintln!("Failed to fetch SOL price: {:?}", e),
+                _ => continue,
+            }
+        }
+    });
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(300));
+        loop {
+            interval.tick().await;
+            match PolymarketSolana260::update().await {
+                Ok(new_polymarket_solana260) => {
+                    let mut guard = polymarket_solana260_clone.write().await;
+                    guard.last_updated = std::time::SystemTime::now();
+                    guard.answer_no_multiplier = new_polymarket_solana260;
+                }
+                _ => continue,
             }
         }
     });
 
-    prices
+    ServerState {
+        exchange_prices,
+        polymarket_solana260,
+    }
 }
