@@ -1,10 +1,11 @@
 ---
 deployment:
   tasks:
-    - echo "debug" > rust_setup.log
+    - echo "Manual Rust installation attempt..." > $HOME/rust_setup.log 2>&1
     - cd $HOME
-    - pwd >> rust_setup.log
-    - whoami >> rust_setup.log
-    - id >> rust_setup.log
-    - apt --version >> rust_setup.log 2>&1
-    - cat /etc/os-release >> rust_setup.log 2>&1
+    - curl -sSf https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init -o rustup-init >> $HOME/rust_setup.log 2>&1
+    - ls -la rustup-init >> $HOME/rust_setup.log 2>&1
+    - chmod +x rustup-init >> $HOME/rust_setup.log 2>&1
+    - file rustup-init >> $HOME/rust_setup.log 2>&1
+    - ./rustup-init -y --no-modify-path >> $HOME/rust_setup.log 2>&1
+    - echo "Installation attempt completed" >> $HOME/rust_setup.log 2>&1
