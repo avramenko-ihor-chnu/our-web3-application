@@ -1,8 +1,6 @@
 ---
 deployment:
   tasks:
-    - echo "Starting Rust setup..." > $HOME/rust_setup.log 2>&1
-    - which cargo >> $HOME/rust_setup.log 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >> $HOME/rust_setup.log 2>&1
-    - source $HOME/.cargo/env >> $HOME/rust_setup.log 2>&1
-    - cargo --version >> $HOME/rust_setup.log 2>&1
-    - echo "Setup complete" >> $HOME/rust_setup.log 2>&1
+    - cd $HOME && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > $HOME/rust_install.log 2>&1
+    - source $HOME/.cargo/env
+    - cargo --version > $HOME/cargo_version.txt 2>&1
