@@ -6,6 +6,7 @@
 		<title>Hedge.fun App</title>
 		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Oswald:wght@200;300;400;500;600;700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800">
+	<link rel="icon" type="image/png" href="images/logo.png">
 	</head>
 	<body>
 
@@ -114,9 +115,11 @@
 			<span>₿</span>
 			<span>Ξ</span>
 			<span>SOL</span>
+			<span>$</span>
 			<span>₿</span>
 			<span>Ξ</span>
 			<span>SOL</span>
+			<span>$</span>
 		</div>
 
 		<script>
@@ -186,7 +189,6 @@
 				</div>
 
 				<button id="hedgeNowBtn" class="btn btn-gradient btn-round" style="margin-top: 20px;">Hedge now</button>
-				<!-- <button class="close-btn" onclick="closePopup('popup-hedge-offer-overlay')" style="margin-top:10px;">✕</button> -->
 			</div>
 		</div>
 
@@ -210,14 +212,30 @@
 				<button class="btn btn-gradient btn-round" style="margin-bottom:10px;" onclick="document.querySelectorAll('.popup-overlay').forEach(o => o.style.display='none')">
 					Go to Dashboard
 				</button>
-				<button class="btn btn-round" style="background-color:#1a2a50; border:1px solid #00ff88; color:#00ff88;">
+				<button class="btn btn-round" style="background-color:#1a2a50; border:1px solid #9ac31c; color:#9ac31c;">
 					Share on Twitter
 				</button>
 			</div>
 		</div>
+		<audio id="popup-sound" src="effects/fanfare.mp3" preload="auto"></audio>
+
+		<!-- <div id="popup-hedge-error-overlay" class="popup-overlay" style="display:none;">
+		<div id="popup-hedge-error" class="popup" style="max-width: 500px; text-align:center;">
+			<img src="images/-.png" alt="Error" style="width:70px; margin-bottom:15px;">
+			<h2 style="margin-bottom: 10px; color:#ec6320;">Hedge failed!</h2>
+			<p style="margin-bottom: 20px;">Please try again later.</p>
+			<button class="btn btn-gradient btn-round" style="margin-bottom:10px;"
+			onclick="document.querySelectorAll('.popup-overlay').forEach(o => o.style.display='none')">
+			Go to Dashboard
+			</button>
+		</div>
+		</div>
+		<audio id="popup-error-sound" src="effects/disappointment.mp3" preload="auto"></audio> -->
 
 		<!-- JS Logic -->
 		<script>
+			const sound = document.getElementById('popup-sound');
+
 			document.addEventListener('DOMContentLoaded', () => {
 				let hedgeTimeout = null;
 				let isProcessing = false;
@@ -226,6 +244,10 @@
 					document.querySelectorAll('.popup-overlay').forEach(o => o.style.display = 'none');
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'flex';
+
+					if (id === 'popup-hedge-result-overlay') {
+						sound.play().catch(() => {});
+					}
 				}
 				
 				function closePopup(id) {
@@ -279,5 +301,20 @@
 											});
 											});
 		</script>
+
+		<!-- JS Background music -->
+		<script>
+			const audio = new Audio('effects/cryptonight.mp3');
+			audio.loop = true;
+			audio.volume = 0.15;
+			function startAudio() {
+			audio.play();
+			document.body.removeEventListener('click', startAudio);
+			document.body.removeEventListener('touchstart', startAudio);
+			}
+			document.body.addEventListener('click', startAudio);
+			document.body.addEventListener('touchstart', startAudio);
+		</script>
+
 	</body>
 </html>

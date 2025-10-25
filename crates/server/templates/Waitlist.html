@@ -6,7 +6,8 @@
   <title>Hedge.fun Waitlist</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Oswald:wght@200;300;400;500;600;700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800">
-</head>я
+  <link rel="icon" type="image/png" href="images/logo.png">
+</head>
 <body>
 
 <!-- HEADER -->
@@ -19,11 +20,13 @@
 <section id="Waitlist" class="waitlist-section section">
 <div>
   <h1>Hedge Your Fun(ds)</h1>
-  <p>Hedge your spot positions using prediction markets - simply bet against yourself on correlated market outcomes. <br>Drop your email and secure 100 Early Hedgehog points.</p>
+  <p>Hedge your spot positions using prediction markets - simply bet against yourself on correlated market outcomes.</p>
   <form id="waitlistForm">
     <input type="email" name="email" placeholder="Enter your email address" required>
     <button type="submit" class="btn btn-gradient btn-round">Join waitlist</button>
   </form>
+  <p style="color: #ec5320; text-decoration: underline; font-weight: 600;">
+  <br>Drop your email and secure 100 Early Hedgehog points.</p>
 </div>
 </section>
 
@@ -52,11 +55,26 @@ document.getElementById('waitlistForm').addEventListener('submit', function(e) {
   <span>₿</span>
   <span>Ξ</span>
   <span>SOL</span>
+  <span>$</span>
   <span>₿</span>
   <span>Ξ</span>
   <span>SOL</span>
+  <span>$</span>
 </div>
 
+<!-- JS Background music -->
+<script>
+    const audio = new Audio('effects/cryptonight.mp3');
+    audio.loop = true;
+    audio.volume = 0.15;
+    function startAudio() {
+      audio.play();
+      document.body.removeEventListener('click', startAudio);
+      document.body.removeEventListener('touchstart', startAudio);
+    }
+    document.body.addEventListener('click', startAudio);
+    document.body.addEventListener('touchstart', startAudio);
+</script>
 
 </body>
 </html>
