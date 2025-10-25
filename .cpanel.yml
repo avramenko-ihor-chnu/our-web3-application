@@ -1,6 +1,10 @@
 ---
 deployment:
   tasks:
-    - cd $HOME && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y > $HOME/rust_install.log 2>&1
-    - source $HOME/.cargo/env
-    - cargo --version > $HOME/cargo_version.txt 2>&1
+    - echo "debug" > rust_setup.log
+    - cd $HOME
+    - pwd >> rust_setup.log
+    - whoami >> rust_setup.log
+    - id >> rust_setup.log
+    - apt --version >> rust_setup.log 2>&1
+    - cat /etc/os-release >> rust_setup.log 2>&1
