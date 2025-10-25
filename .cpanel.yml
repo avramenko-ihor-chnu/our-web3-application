@@ -1,14 +1,4 @@
 ---
 deployment:
   tasks:
-    - which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    - source $HOME/.cargo/env
-    - rustup default stable
-    - cargo build --release
-    - {
-        echo "=== Deployment Log ===";
-        date;
-        echo "Rust version: $(rustc --version)";
-        echo "Build completed successfully";
-        echo "Binary: $(ls -la target/release/our-web3-application)";
-      } > website_deploy.md
+    - echo "Hello from cPanel deployment" > $HOME/deployment_hello.txt
