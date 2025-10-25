@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - echo "Hello from cPanel deployment" > $HOME/deployment_hello.txt
+    - echo $(which rustc) > $HOME/deployment_hello.txt
