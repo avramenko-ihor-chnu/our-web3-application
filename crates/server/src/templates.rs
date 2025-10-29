@@ -7,3 +7,15 @@ pub struct ExchangeRate<'a> {
     pub usd: &'a str,
     pub rate: &'a str,
 }
+
+#[derive(Template)]
+#[template(path = "user-assets.html")]
+pub struct AccountAssets {
+    pub assets_rows: Vec<AssetsRow>,
+}
+
+pub struct AssetsRow {
+    pub asset: String,
+    pub balance: String,
+    pub value: String,
+}
