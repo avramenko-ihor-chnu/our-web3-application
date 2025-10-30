@@ -1,7 +1,10 @@
 mod server;
 mod templates;
 
-use crate::server::{ActivePolymarketSearch, LoadAccount, ServerState};
+use crate::{
+    server::{ActivePolymarketSearch, LoadAccount, ServerState},
+    templates::AssetsRow,
+};
 use application::{ExchangePrices, LamportBalance, PolymarketSolana260};
 
 use askama::Template;
@@ -71,7 +74,7 @@ async fn account(
     let rate = exchange_prices.read().await.sol_to_usd;
     let lamport_balance = LamportBalance::get(account_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     let sol = &format!("{:.2}", lamport_balance.to_sol());
     let usd = &format!("{:.2}", lamport_balance.to_usd(rate));
     let rate = &format!("{:.2}", exchange_prices.read().await.sol_to_usd);
@@ -93,7 +96,7 @@ async fn positions(
     let rate = exchange_prices.read().await.sol_to_usd;
     let lamport_balance = LamportBalance::get(account_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     let sol = lamport_balance.to_sol();
     let usd = lamport_balance.to_usd(rate);
     // Активи користувача (затичка / треба замінити на реальні підтягування)
@@ -102,19 +105,23 @@ async fn positions(
         ("USDC", 150.0, 150.0),
         ("BONK", 1200000.0, 30.0),
     ];
-    // HTML для <tbody>
-    let mut html = String::new();
-    for (asset, balance, value) in assets {
-        if value < 10.0 { continue; } // фільтр >$10
-        html.push_str(&format!(
-            r#"<tr>
-                <td><input type="checkbox" name="asset" value="{asset}"></td>
-                <td><img class="token-icon" data-symbol="{asset}" alt="{asset}"> {asset}</td>
-                <td>{balance:.2}</td>
-                <td>${value:.2}</td>
-            </tr>"#
-        ));
-    }
+    let assets_rows: Vec<AssetsRow> = assets
+        .iter()
+        .map(|(asset, balance, value)| {
+            let asset = asset.to_string();
+            let balance = format!("{balance:.2}");
+            let value = format!("{value:.2}");
+            AssetsRow {
+                asset,
+                balance,
+                value,
+            }
+        })
+        .collect();
+    let html = templates::AccountAssets { assets_rows }
+        .render()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
     Ok(Html(html))
 }
 
