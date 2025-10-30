@@ -1,4 +1,4 @@
- // Відображення активних хеджів у Dashboard
+// Відображення активних хеджів у Dashboard
 
 let userHedges = JSON.parse(localStorage.getItem('userHedges') || '[]');
 
@@ -444,3 +444,36 @@ document.body.addEventListener('click', startAudio);
 document.body.addEventListener('touchstart', startAudio);
 
 //=================================================================================================
+
+// Twitter post
+document.getElementById("shareTwitterBtn").addEventListener("click", async () => {
+  // 1. Створюємо canvas
+  const canvas = document.getElementById("shareCanvas");
+  const ctx = canvas.getContext("2d");
+  // Білий фон (поки без картинки з бази)
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // 2. Текст позиції
+  ctx.fillStyle = "#1a2a50";
+  ctx.font = "bold 32px Arial";
+  ctx.fillText("$8 @ 37.1K", 40, 100);
+  ctx.fillStyle = "#00cc44";
+  ctx.font = "bold 60px Arial";
+  ctx.fillText("102X", 40, 180);
+  // 3. Додаємо фрази бренду
+  ctx.fillStyle = "#1a2a50";
+  ctx.font = "24px Arial";
+  ctx.fillText("I hedged my position like a pro on hedgeyour.fun", 40, 260);
+  ctx.fillStyle = "#9ac31c";
+  ctx.font = "22px Arial";
+  ctx.fillText("Join me on hedgeyour.fun", 40, 310);
+  // 4. Конвертуємо у зображення
+  const imageURL = canvas.toDataURL("image/png");
+  // 5. Створюємо лінк для Twitter
+  const tweetText = encodeURIComponent("Join me at hedgeyour.fun");
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+  // Twitter не дозволяє напряму передати base64-картинку,
+  // тому зображення потрібно буде завантажити на сервер або IPFS.
+  // Для тесту відкриваємо твітер з текстом:
+  window.open(tweetUrl, "_blank");
+});

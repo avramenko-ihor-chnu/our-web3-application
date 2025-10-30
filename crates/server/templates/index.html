@@ -7,6 +7,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Oswald:wght@200;300;400;500;600;700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800">
 	<link rel="icon" type="image/png" href="images/logo.png">
@@ -131,7 +132,7 @@
 						});
 						document.getElementById("MyPositions").hidden = false;
 					} catch (err) {
-						console.error("Ошибка при загрузке позиций:", err);
+						console.error("Помилка під час завантаження позицій:", err);
 						tbody.innerHTML = "<tr><td colspan='4'>Failed to load positions</td></tr>";
 					}
 				}
@@ -161,7 +162,7 @@
 				<a href="https://x.com/hedgeyourfun" target="_blank" class="social-link">
 					<img src="images/twitter.png" alt="Twitter" class="social-icon">
 				</a>
-				<a href="https://serhiys-organization.gitbook.io/hedgeyour.fun" class="social-link">
+				<a href="https://docs.hedgeyour.fun" class="social-link">
 					<img src="images/git.png" alt="FAQ" class="social-icon">
 				</a>
 				<a href="https://linktr.ee/HedgeYourFun" class="social-link">
@@ -341,9 +342,10 @@
 				<button class="btn btn-gradient btn-round" style="margin-bottom:10px;" onclick="document.querySelectorAll('.popup-overlay').forEach(o => o.style.display='none')">
 					Go to Dashboard
 				</button>
-				<button class="btn btn-round" style="background-color:#1a2a50; border:1px solid #9ac31c; color:#9ac31c;">
+				<button id="shareTwitterBtn" class="btn btn-round" style="background-color:#1a2a50; border:1px solid #9ac31c; color:#9ac31c;">
 					Share on Twitter
 				</button>
+				<canvas id="shareCanvas" width="800" height="400" style="display:none;"></canvas>
 			</div>
 		</div>
 		<audio id="popup-sound" src="effects/fanfare 2.mp3" preload="auto"></audio>
