@@ -1,3 +1,52 @@
+ // Відображення активних хеджів у Dashboard
+
+let userHedges = JSON.parse(localStorage.getItem('userHedges') || '[]');
+
+function saveHedges() {
+    localStorage.setItem('userHedges', JSON.stringify(userHedges));
+}
+
+function renderHedges() {
+    const tbody = document.getElementById('hedgeTableBody');
+    if (!tbody) return;
+
+    if (userHedges.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No active hedges yet.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = userHedges.map((h, i) => `
+        <tr>
+            <td>${h.market}</td>
+            <td>${h.size}</td>
+            <td>${h.toWin}</td>
+            <td>${h.toPay}</td>
+            <td>${h.status}</td>
+            <td>
+                ${h.status === 'Active' ? 
+                    `<button class="btn btn-gradient btn-round" data-index="${i}" onclick="closeHedge(${i})">Close</button>` 
+                    : '-'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function closeHedge(index) {
+    const hedge = userHedges[index];
+    if (!confirm(`Close hedge: ${hedge.market}?`)) return;
+
+    hedge.status = 'Closed';
+    hedge.closePrice = (Math.random() * 100 + 10).toFixed(2); // умовна ціна закриття
+    hedge.closedAt = new Date().toLocaleString();
+
+    saveHedges();
+    renderHedges();
+
+    alert(`Hedge closed at $${hedge.closePrice}`);
+}
+
+//=================================================================================================
+
 // <!-- JS Popup Logic -->
 const soundsuccess = document.getElementById('popup-sound');
 const sounderror = document.getElementById('popup-error-sound');
@@ -64,31 +113,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Рандомний результат: успіх чи помилка
                 const isSuccess = Math.random() < 0.6; // 60% шанс успіху
                 if (isSuccess) {
+                    // Імітуємо дані з popup-hedge-offer
+                    const selectedHedge = document.querySelector('input[name="hedge-select"]:checked');
+                    const row = selectedHedge?.closest('tr');
+                    if (row) {
+                        const market = row.cells[0].innerText;
+                        const size = row.cells[1].innerText;
+                        const toWin = row.cells[2].innerText;
+                        const toPay = row.cells[4].innerText;
+                        const hedge = {
+                            market, size, toWin, toPay,
+                            status: 'Active',
+                            date: new Date().toLocaleString()
+                        };
+                        userHedges.push(hedge);
+                        saveHedges();
+                        renderHedges();
+                    }
+
                     openPopup('popup-hedge-result-overlay');
                 } else {
                     openPopup('popup-hedge-error-overlay');
                 }
+
             }, 2000 + Math.random() * 2000); // випадкова затримка 2-4 сек.
         });
     }
 
+renderHedges(); // Ініціалізація при завантаженні
+
 });
-
-//=================================================================================================
-
-// <!-- Background Music -->
-const audio = new Audio('effects/cryptonight.mp3');
-audio.loop = true;
-audio.volume = 0.15;
-
-function startAudio() {
-    audio.play().catch(() => { });
-    document.body.removeEventListener('click', startAudio);
-    document.body.removeEventListener('touchstart', startAudio);
-}
-
-document.body.addEventListener('click', startAudio);
-document.body.addEventListener('touchstart', startAudio);
 
 //=================================================================================================
 
@@ -372,5 +426,21 @@ particlesJS("particles-js", {
     },
     retina_detect: true
 });
+
+//=================================================================================================
+
+// <!-- Background Music -->
+const audio = new Audio('effects/cryptonight.mp3');
+audio.loop = true;
+audio.volume = 0.15;
+
+function startAudio() {
+    audio.play().catch(() => { });
+    document.body.removeEventListener('click', startAudio);
+    document.body.removeEventListener('touchstart', startAudio);
+}
+
+document.body.addEventListener('click', startAudio);
+document.body.addEventListener('touchstart', startAudio);
 
 //=================================================================================================
