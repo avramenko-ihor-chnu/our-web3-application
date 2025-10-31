@@ -1,5 +1,5 @@
-use application::AssetsRow;
 use askama::Template;
+use serde::Serialize;
 
 #[derive(Template)]
 #[template(path = "exchange-rate.html")]
@@ -12,5 +12,5 @@ pub struct ExchangeRate<'a> {
 #[derive(Template)]
 #[template(path = "user-assets.html")]
 pub struct AccountAssets {
-    pub assets_rows: Vec<AssetsRow>,
+    pub assets_rows: Vec<application::AssetsRow>,
 }

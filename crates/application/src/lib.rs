@@ -229,6 +229,8 @@ pub struct LamportBalance(u64);
 pub struct ExchangePrices {
     pub last_updated: std::time::SystemTime,
     pub sol_to_usd: f64,
+    pub btc_to_usd: f64,
+    pub eth_to_usd: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -275,10 +277,6 @@ impl PolymarketSolana260 {
             .iter()
             .map(|&raw_price| raw_price + POLYMARKET_FEE)
             .collect();
-
-        // println!("Raw prices: {:?}", raw_prices);
-        // println!("Website prices: {:?}", website_prices);
-
         Ok(website_prices[1])
     }
 }
@@ -288,7 +286,24 @@ impl ExchangePrices {
         Self {
             last_updated: std::time::SystemTime::UNIX_EPOCH,
             sol_to_usd: 0.0,
+            btc_to_usd: 0.0,
+            eth_to_usd: 0.0,
         }
+    }
+    pub async fn update(&mut self) -> Result<(), AppError> {
+        let sol_future = Self::get_sol_price();
+        let btc_future = Self::get_btc_price();
+        let eth_future = Self::get_eth_price();
+
+        let (sol_price, btc_price, eth_price) =
+            tokio::try_join!(sol_future, btc_future, eth_future)?;
+
+        self.sol_to_usd = sol_price;
+        self.btc_to_usd = btc_price;
+        self.eth_to_usd = eth_price;
+        self.last_updated = std::time::SystemTime::now();
+
+        Ok(())
     }
 
     pub async fn get_sol_price() -> Result<f64, AppError> {
@@ -305,6 +320,47 @@ impl ExchangePrices {
         json["solana"]["usd"]
             .as_f64()
             .ok_or(AppError::ExchangePriceApiErr)
+    }
+
+    pub async fn get_btc_price() -> Result<f64, AppError> {
+        let url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+        let response = reqwest::get(url)
+            .await
+            .map_err(|_| AppError::ExchangePriceApiErr)?;
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|_| AppError::ExchangePriceApiErr)?;
+
+        json["bitcoin"]["usd"]
+            .as_f64()
+            .ok_or(AppError::ExchangePriceApiErr)
+    }
+
+    pub async fn get_eth_price() -> Result<f64, AppError> {
+        let url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
+        let response = reqwest::get(url)
+            .await
+            .map_err(|_| AppError::ExchangePriceApiErr)?;
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|_| AppError::ExchangePriceApiErr)?;
+
+        json["ethereum"]["usd"]
+            .as_f64()
+            .ok_or(AppError::ExchangePriceApiErr)
+    }
+
+    pub fn get_price(&self, symbol: &str) -> Option<f64> {
+        match symbol.to_lowercase().as_str() {
+            "sol" | "solana" => Some(self.sol_to_usd),
+            "btc" | "bitcoin" => Some(self.btc_to_usd),
+            "eth" | "ethereum" => Some(self.eth_to_usd),
+            _ => None,
+        }
     }
 
     pub fn get_sol_to_usd(&self) -> f64 {
