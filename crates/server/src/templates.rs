@@ -1,3 +1,4 @@
+use application::AssetsRow;
 use askama::Template;
 
 #[derive(Template)]
@@ -12,10 +13,4 @@ pub struct ExchangeRate<'a> {
 #[template(path = "user-assets.html")]
 pub struct AccountAssets {
     pub assets_rows: Vec<AssetsRow>,
-}
-
-pub struct AssetsRow {
-    pub asset: String,
-    pub balance: String,
-    pub value: String,
 }

@@ -1,10 +1,8 @@
 mod server;
 mod templates;
 
-use crate::{
-    server::{ActivePolymarketSearch, LoadAccount, ServerState},
-    templates::AssetsRow,
-};
+use crate::server::{ActivePolymarketSearch, LoadAccount, ServerState};
+use application::{AssetsRow, WalletService};
 use application::{ExchangePrices, LamportBalance, PolymarketSolana260};
 
 use askama::Template;
@@ -93,31 +91,13 @@ async fn positions(
     }): State<ServerState>,
     Form(LoadAccount { account_id }): Form<LoadAccount>,
 ) -> Result<Html<String>, StatusCode> {
-    let rate = exchange_prices.read().await.sol_to_usd;
-    let lamport_balance = LamportBalance::get(account_id)
+    let wallet_service = WalletService::new();
+
+    let assets_rows = wallet_service
+        .get_wallet_assets(&account_id)
         .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    let sol = lamport_balance.to_sol();
-    let usd = lamport_balance.to_usd(rate);
-    // Активи користувача (затичка / треба замінити на реальні підтягування)
-    let assets = vec![
-        ("SOL", sol, usd),
-        ("USDC", 150.0, 150.0),
-        ("BONK", 1200000.0, 30.0),
-    ];
-    let assets_rows: Vec<AssetsRow> = assets
-        .iter()
-        .map(|(asset, balance, value)| {
-            let asset = asset.to_string();
-            let balance = format!("{balance:.2}");
-            let value = format!("{value:.2}");
-            AssetsRow {
-                asset,
-                balance,
-                value,
-            }
-        })
-        .collect();
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
     let html = templates::AccountAssets { assets_rows }
         .render()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

@@ -1,7 +1,98 @@
+use axum::http::StatusCode;
+use reqwest::Client;
+use serde::Deserialize;
 use serde::Serialize;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
+use std::collections::HashMap;
 use std::str::FromStr;
+
+pub struct AssetsRow {
+    pub asset: String,
+    pub balance: String,
+    pub value: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionPortfolioResponse {
+    links: ZerionLinks,
+    data: ZerionPortfolioData,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionLinks {
+    #[serde(rename = "self")]
+    self_link: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionPortfolioData {
+    #[serde(rename = "type")]
+    data_type: String,
+    id: String,
+    attributes: ZerionAttributes,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionAttributes {
+    positions_distribution_by_type: HashMap<String, f64>,
+    positions_distribution_by_chain: HashMap<String, f64>,
+    total: ZerionTotal,
+    changes: ZerionChanges,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionTotal {
+    positions: f64,
+}
+
+#[derive(Debug, Deserialize)]
+struct ZerionChanges {
+    absolute_1d: f64,
+    percent_1d: Option<f64>,
+}
+
+struct ZerionClient {
+    client: Client,
+    auth_header: String,
+}
+
+impl ZerionClient {
+    pub fn new() -> Self {
+        Self {
+            client: Client::new(),
+            auth_header: "Basic emtfZGV2X2RhNzg4OWRmMjUwZTQ1ZTFhNzAwY2M3OTg1YjE2MTQ3Og=="
+                .to_string(),
+        }
+    }
+
+    pub async fn get_portfolio(&self, address: &str) -> Result<ZerionPortfolioResponse, AppError> {
+        let url = format!(
+            "https://api.zerion.io/v1/wallets/{}/portfolio?currency=usd",
+            address
+        );
+
+        let response = self
+            .client
+            .get(&url)
+            .header("accept", "application/json")
+            .header("authorization", &self.auth_header)
+            .send()
+            .await
+            .map_err(|_| AppError::ZerionApiErr)?;
+
+        if !response.status().is_success() {
+            return Err(AppError::ZerionApiErr);
+        }
+
+        let portfolio_data = response
+            .json::<ZerionPortfolioResponse>()
+            .await
+            .map_err(|_| AppError::ZerionApiErr)?;
+
+        Ok(portfolio_data)
+    }
+}
 
 #[derive(Debug)]
 pub enum AppError {
@@ -9,6 +100,8 @@ pub enum AppError {
     ErrorFetchingBalance,
     ExchangePriceApiErr,
     PolymarketApiErr,
+    ZerionApiErr,
+    SolanaRpcErr,
 }
 
 #[derive(Debug)]
@@ -26,7 +119,105 @@ impl std::fmt::Display for AppError {
             AppError::ErrorFetchingBalance => write!(f, "Error fetching balance"),
             AppError::ExchangePriceApiErr => todo!(),
             AppError::PolymarketApiErr => todo!(),
+            AppError::ZerionApiErr => todo!(),
+            AppError::SolanaRpcErr => todo!(),
         }
+    }
+}
+
+impl Into<StatusCode> for AppError {
+    fn into(self) -> StatusCode {
+        match self {
+            AppError::PolymarketApiErr => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ZerionApiErr => StatusCode::BAD_REQUEST,
+            AppError::SolanaRpcErr => StatusCode::BAD_REQUEST,
+            AppError::InvalidWalletAddress(_) => StatusCode::BAD_REQUEST,
+            AppError::ErrorFetchingBalance => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ExchangePriceApiErr => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+pub struct WalletService {
+    zerion_client: ZerionClient,
+    // Keep solana client if you still need it for specific Solana-only features
+}
+
+impl WalletService {
+    pub fn new() -> Self {
+        Self {
+            zerion_client: ZerionClient::new(),
+        }
+    }
+
+    pub async fn get_wallet_assets(&self, address: &str) -> Result<Vec<AssetsRow>, AppError> {
+        // First try Zerion API for multi-chain support
+        match self.zerion_client.get_portfolio(address).await {
+            Ok(portfolio) => self.zerion_portfolio_to_assets(portfolio, address).await,
+            Err(_) => {
+                // If Zerion fails, fall back to Solana-only approach
+                self.get_solana_assets(address).await
+            }
+        }
+    }
+
+    async fn zerion_portfolio_to_assets(
+        &self,
+        portfolio: ZerionPortfolioResponse,
+        address: &str,
+    ) -> Result<Vec<AssetsRow>, AppError> {
+        let mut assets = Vec::new();
+
+        // Check if portfolio is empty (likely invalid address or no assets)
+        if portfolio.data.attributes.total.positions == 0.0 {
+            // Try to get detailed positions to see if there are actually assets
+            // or if this is an invalid address
+            return self.get_detailed_positions(address).await;
+        }
+
+        // Process chain distribution
+        for (chain, value) in portfolio.data.attributes.positions_distribution_by_chain {
+            if value > 0.0 {
+                assets.push(AssetsRow {
+                    asset: chain,
+                    balance: format!("{:.2}", value), // This is USD value
+                    value: format!("{:.2}", value),
+                });
+            }
+        }
+
+        // If we have assets, return them
+        if !assets.is_empty() {
+            Ok(assets)
+        } else {
+            // Fall back to Solana if no assets found
+            self.get_solana_assets(address).await
+        }
+    }
+
+    async fn get_detailed_positions(&self, address: &str) -> Result<Vec<AssetsRow>, AppError> {
+        // You can implement this later to get individual token positions
+        // For now, fall back to Solana
+        self.get_solana_assets(address).await
+    }
+
+    async fn get_solana_assets(&self, address: &str) -> Result<Vec<AssetsRow>, AppError> {
+        // Your existing Solana balance logic here
+        let lamport_balance = LamportBalance::get(address.to_string())
+            .await
+            .map_err(|_| AppError::SolanaRpcErr)?;
+
+        let sol = lamport_balance.to_sol();
+        // For USD conversion, you might need to get current SOL price
+        let usd = sol * 100.0; // Placeholder - replace with actual rate
+
+        let assets = vec![AssetsRow {
+            asset: "SOL".to_string(),
+            balance: format!("{:.6}", sol),
+            value: format!("{:.2}", usd),
+        }];
+
+        Ok(assets)
     }
 }
 
