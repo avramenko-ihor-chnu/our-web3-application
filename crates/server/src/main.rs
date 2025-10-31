@@ -92,11 +92,33 @@ async fn positions(
     Form(LoadAccount { account_id }): Form<LoadAccount>,
 ) -> Result<Html<String>, StatusCode> {
     let wallet_service = WalletService::new();
+    let exchange_rates = exchange_prices.read().await;
 
-    let assets_rows = wallet_service
+    let wallet_assets = wallet_service
         .get_wallet_assets(&account_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // Convert wallet assets to template AssetRow with USD values
+    let assets_rows: Vec<AssetsRow> = wallet_assets
+        .into_iter()
+        .map(|asset| {
+            let usd_value = if let Some(price) = exchange_rates.get_price(&asset.asset) {
+                // Use asset.asset instead of asset.symbol
+                // Parse the balance to calculate USD value
+                let balance: f64 = asset.balance.parse().unwrap_or(0.0); // Use asset.balance instead of asset.amount
+                format!("${:.2}", balance * price)
+            } else {
+                "N/A".to_string()
+            };
+
+            AssetsRow {
+                asset: asset.asset,
+                balance: asset.balance,
+                value: usd_value,
+            }
+        })
+        .collect();
 
     let html = templates::AccountAssets { assets_rows }
         .render()
