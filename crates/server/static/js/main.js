@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 closePopup('popup-hedge-confirmation-overlay');
                 // Рандомний результат: успіх чи помилка
-                const isSuccess = Math.random() < 0.6; // 60% шанс успіху
+                const isSuccess = Math.random() < 0.69; // 70% шанс успіху
                 if (isSuccess) {
                     // Імітуємо дані з popup-hedge-offer
                     const selectedHedge = document.querySelector('input[name="hedge-select"]:checked');
@@ -469,9 +469,15 @@ document.getElementById("shareTwitterBtn").addEventListener("click", async () =>
   ctx.fillText("Join me on hedgeyour.fun", 40, 310);
   // 4. Конвертуємо у зображення
   const imageURL = canvas.toDataURL("image/png");
-  // 5. Створюємо лінк для Twitter
-  const tweetText = encodeURIComponent("Join me at hedgeyour.fun");
-  const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+// 5. Створюємо лінк для Twitter
+const tweetOptions = [
+  "Hedging my risks with @Hedgeyourfun on $1000. Because being wrong shouldn’t mean being broke.",
+  "I’m not gambling - I’m hedging. $1000 protected with @Hedgeyourfun.",
+  "Put $1000 on the line, but hedged it with @Hedgeyourfun. If I’m wrong, I still win. That’s real alpha."
+];
+const randomTweet = tweetOptions[Math.floor(Math.random() * tweetOptions.length)];
+const tweetText = encodeURIComponent(randomTweet);
+const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
   // Twitter не дозволяє напряму передати base64-картинку,
   // тому зображення потрібно буде завантажити на сервер або IPFS.
   // Для тесту відкриваємо твітер з текстом:
