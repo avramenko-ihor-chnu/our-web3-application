@@ -1,11 +1,11 @@
-# 🧠 HedgeYourFun
+# HedgeYourFun
 
 **HedgeYourFun** — a live mainnet app that helps hedge spot positions using prediction markets.
 Currently available in a **limited version**, with new strategies being added as we expand.
 
 ---
 
-## 📝 Description
+## Description
 
 **HedgeYourFun** helps users manage and balance exposure across prediction markets like **Polymarket** and **Kalshi**.
 By analyzing real-time market data, it recommends optimal hedge strategies — allowing users to reduce risk, lock in profits, or simply have more fun while trading.
@@ -14,7 +14,7 @@ By analyzing real-time market data, it recommends optimal hedge strategies — a
 
 ---
 
-## ⚡️ Quick Start
+## Quick Start
 
 1. **Join the Waitlist:** Get early access to the full version.
 2. **Enter the Platform:** Open [hedgeyourfun.io](https://hedgeyourfun.io) *(coming soon)*.
@@ -26,7 +26,7 @@ By analyzing real-time market data, it recommends optimal hedge strategies — a
 
 ---
 
-## ⚙️ How It Works
+## How It Works
 
 - The backend continuously **parses active markets** from **Kalshi** and **Polymarket**.
 - Our **algorithm identifies correlated or inverse markets** that can act as a hedge.
@@ -38,7 +38,7 @@ By analyzing real-time market data, it recommends optimal hedge strategies — a
 
 ---
 
-## 🧩 Contributing
+## Contributing
 
 We welcome ideas and collaborations!
 
