@@ -17,7 +17,7 @@ By analyzing real-time market data, it recommends optimal hedge strategies — a
 ## Quick Start
 
 1. **Join the Waitlist:** Get early access to the full version.
-2. **Enter the Platform:** Open [hedgeyourfun.io](https://hedgeyourfun.io) *(coming soon)*.
+2. **Enter the Platform:** Open [hedgeyourfun.io](https://www.hedgeyour.fun/) *(coming soon)*.
 3. **Connect or Paste Your Wallet:**
    - You can connect via wallet
    - or simply paste your public address.
@@ -44,4 +44,4 @@ We welcome ideas and collaborations!
 
 - 💡 Have a better hedging strategy?
 - ⚙️ Want to offer data or upgrade integrations?
-- 📧 Reach us at **hello@hedgeyourfun.io**
+- 📧 Reach us at **contact@hedgeyour.fun**
