@@ -1,3 +1,97 @@
+//! # Application Server
+//! Веб серверний компоннент, для застосунку _HedgeYourFun_
+//! У обов'яки коптонетну входить:
+//! - обслуговування користувача
+//!   + надсилання сторінки, що ініцює взаємодіє з користувачем
+//!   + обробка запитів зі сторінки користувача
+//!   + частина реактивного інтерфейсу користувача
+//! - синхронізацізалія данних використовуючи підєднані api
+//! ## HTMX
+//! Застосунок покладається на [htmx](https://htmx.org/) для UI
+//! htmx-застосунки покладаються на сервер, що відпаравляє html
+//! Htmx буде вкладати відповідь у сторінку для досягнення SPA UX
+//! Наразі, застосунок відправляє як статичний (той, що не залежить від запиту користувача) html
+//! Так і динамічний (той, що залежить від запиту користувача)
+//! Побудова динамічних сторінок виконується шаблонним рушієм [askama](https://askama.readthedocs.io/en/stable/)
+//! Виклик шаблонів можна впізнати за `templates::`, що є початком виклику одного зі шаблонів у `crates/server/src/templates.rs`
+//! Виклик статичного html можна впізнати за `fs::read_to_string()`.
+//! ## Tokio
+//! `fs::read_to_string()` є скороченням від `tokio::fs::read_to_string`
+//! `tokio` - асинхронний рантайм для `rust`
+//! Ця програма асинхронна, `tokio` містить асинхронні api для стандартних функцій
+//! Тому якщо у вас колись буде вибір між використанням `std::XXX` та `tokio::XXX`
+//! у більшості випадків варто надати перевагу останньому.
+//! ## Axum
+//! `axum` це бекенд фреймворк.
+//! Для озайомлення з його можливосятями відівідайте [https://github.com/tokio-rs/axum/tree/main/examples](https://github.com/tokio-rs/axum/tree/main/examples)
+//! Оберіть бажану фічу та ознайомтеся з імлементацією
+//! ## Cookbook
+//! Іструкції для додавння функціоналу до цієї програми
+//! ### Ви хочете додати новий шаблон та ендпоінт для нього
+//! Для створення шаблону вам варто:
+//! - створити `html` файл у `crates/server/templates/`
+//! - створити `struct` (об'єкт) у `crates/server/src/templates.rs`
+//! - ендпоінт, що буде відповідати на запит
+//! - якщо, ви використовуєте html форму для отримання вводу користувача - поперньо створіть `struct` що відображає зміст цієї форми
+//! ___
+//! Ми хочемо взяти у користувача слово (`word`) та кількість (`number`), ми повернемо користувачу `ul>li{${rev_word}}*${number}`, де `rev_word` це слово задом-наперед.
+//! Спершу варто всяти у користувача ввід. Додаймо `html` форму до нашого `index.html`:
+//! ```html
+//! <form hx-post="/word_number">
+//!   <input name="word" type="text">
+//!   <input name="number" type="number" min="0" step="1">
+//!   <button type="submit">Submit</button>
+//! </form>
+//! ```
+//! Тепер варто додати `struct` до `server.rs`, що відображає форму
+//!
+//! ```
+//! #[derive(Debug, Deserialize)]
+//! pub struct WordNumber {
+//!     pub word: String,
+//!     pub number: u32,
+//! }
+//! ```
+//! При визначенні форми ми вказали намір роботи `POST` запити на `/word_number`
+//! Додаймо цей ендпоінт до нашого роутера
+//! ```
+//! let app = Router::new()
+//!     .route("/", get(index))
+//!     .route("/word_number", post(word_number)) // <== наш новий ендпоінт
+//!     .with_state(server_state);
+//! ```
+//! Перед тим як створити функцію `word_number`, створімо `html` шаблон, у `templates`
+//! нехай це буде `templates/word_number.html`
+//! ```jinja
+//! <ul>
+//!   {% for _ in range(end=number) %}
+//!     <li>{{ rev_word }}</li>
+//!   {% endfor %}
+//! </ul>
+//! ```
+//! Додамо обробник шаблона до файлу `src/templates.rs`,
+//! це `struct` який відоражає ввід для нашого шаблона,
+//! ```
+//! #[derive(Template)]
+//! #[template(path = "word_number.html")]
+//! pub struct WordNumber {
+//!     pub rev_word: String,
+//!     pub number: u32,
+//! }
+//! ```
+//! `<'a>` поруч з `WordNumber` та `rev_word` означає, що `rev_word` мусить померти (бути стертим з пам'яті) по смерті `WordNumber`
+//! Додамо обробника ендпоінта, раніше ми вказали, що цим буде займатися `word_number`
+//! ```
+//! async fn word_number(Form(WordNumber { word, number })) -> Result<Html<String>,StatusCode> {
+//!     let rev_word: String = word.chars().rev().collect();
+//!     let word_number = templates::WordNumber { rev_word, number };
+//!     let html = word_number
+//!         .render()
+//!         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+//!
+//!     Ok(Html(html))
+//! }
+//! ```
 mod server;
 mod templates;
 
@@ -17,6 +111,10 @@ use std::{sync::Arc, time::Duration};
 use tokio::{fs, sync::RwLock};
 use tower_http::services::ServeDir;
 
+/// ## main
+/// Це роутер, тут визначаються енд поінти які може обробити сервер.
+/// ### route
+/// Для додавання нового ендпоінта
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let server_state = server_state_updater();
@@ -99,13 +197,10 @@ async fn positions(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Convert wallet assets to template AssetRow with USD values
     let assets_rows: Vec<AssetsRow> = wallet_assets
         .into_iter()
         .map(|asset| {
             let usd_value = if let Some(price) = exchange_rates.get_price(&asset.asset) {
-                // Use asset.asset instead of asset.symbol
-                // Parse the balance to calculate USD value
                 let balance: f64 = asset.balance.parse().unwrap_or(0.0); // Use asset.balance instead of asset.amount
                 format!("${:.2}", balance * price)
             } else {
