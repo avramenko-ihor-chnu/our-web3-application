@@ -1,109 +1,47 @@
-# Наш перший веб3 застосунок
+# 🧠 HedgeYourFun
 
-## Запуск
+**HedgeYourFun** — a live mainnet app that helps hedge spot positions using prediction markets.
+Currently available in a **limited version**, with new strategies being added as we expand.
 
-Для запуску проекту вам вам варто мати встановлений `rust` та `cargo`, зверністься до [https://rust-lang.org/learn/get-started/](https://rust-lang.org/learn/get-started/) для їх встановлення.
+---
 
-1. клонуйте репозиторій
-   ```sh
-   $ # Для користувачів git:
-   $ git clone https://github.com/avramenko-ihor-chnu/our-web3-application
+## 📝 Description
 
-   $ # Для користувачів jj:
-   $ jj git clone https://github.com/avramenko-ihor-chnu/our-web3-application
-   ```
+**HedgeYourFun** helps users manage and balance exposure across prediction markets like **Polymarket** and **Kalshi**.
+By analyzing real-time market data, it recommends optimal hedge strategies — allowing users to reduce risk, lock in profits, or simply have more fun while trading.
 
-2. Зайдіть у директорію
-   ```sh
-   $ cd our-web3-application
-   ```
+> 💡 Live on mainnet (limited version) — more strategies coming soon.
 
-3. Побудуйте та запустіть проект
-   ```sh
-   $ cargo run
-   ```
+---
 
-## Внесок
+## ⚡️ Quick Start
 
-### Проста зміна
+1. **Join the Waitlist:** Get early access to the full version.
+2. **Enter the Platform:** Open [hedgeyourfun.io](https://hedgeyourfun.io) *(coming soon)*.
+3. **Connect or Paste Your Wallet:**
+   - You can connect via wallet
+   - or simply paste your public address.
+4. **Get Hedge Options:** The app automatically scans your open positions and offers suitable hedges.
+5. **Click “Hedge”:** Choose your preferred strategy and confirm — that’s it.
 
-Для того, щоб почати працювати на репозиторієм вам варто
+---
 
-1. клонувати його
-   ```sh
-   $ jj git clone https://github.com/avramenko-ihor-chnu/our-web3-application
-   ```
-2. ініціалізувати нову зміну (наприклад ви бажаєте змінити логотип)
-   ```sh
-   $ jj new -m "logo change"
-   ```
-3. змінити код
-4. відправити вашу зміну на github
-   ```sh
-   $ jj git push -c @
-   ```
+## ⚙️ How It Works
 
-Я отримаю повідомлення, та відреагую на нього, або я додам вашу зміну у головну гілку, або відправлю коментар до вашої зміни (слідкуйте за вашим github), ви можете відреагувати на мою відповідь кількома способами відповідно, зверністься до туторіалу на [https://steveklabnik.github.io/jujutsu-tutorial/sharing-code/updating-prs.html#responding-to-pull-request-feedback](https://steveklabnik.github.io/jujutsu-tutorial/sharing-code/updating-prs.html#responding-to-pull-request-feedback) за нагадуванням
+- The backend continuously **parses active markets** from **Kalshi** and **Polymarket**.
+- Our **algorithm identifies correlated or inverse markets** that can act as a hedge.
+- Users receive real-time hedge suggestions based on:
+  - price movements
+  - liquidity
+  - and market correlation metrics.
+- As strategies evolve, new hedge models and protocols are integrated.
 
-### Синхронізування шаблонів з бекенд кодом
+---
 
-Фронтенд проекту використувує `htmx` що означає, що стан веб застусунку покладається на `backend` і важливо, щоб `backend` розробник як можна швидше та якісніше реагував на зміни `frontend` розробника.
-Для підвищення продуктивності колаборації пропоную наступний алгоритм змін до `frontend`:
+## 🧩 Contributing
 
-- Ви бажаєте мати новий функціонал, наприклад вивдення **топ 5 найдорожчих криптовалют**
-- Ви створуєте створюєте шаблон, наприклад
-  ```jinja
-  <!-- server/templates/crypto-top-table.html -->
-  <h2>Топ 5 надорожчих криптовлют</h2>
-  <table class="table">
-   <thead>
-     <tr>
-       <th>Місце</th>
-       <th>Назва</th>
-       <th>Вартість у USD</th>
-     </tr>
-   </thead>
-   <tbody>
-     {% for row in rows %}
-     <tr>
-       <td>{{ loop.index }}</td>
-       <td>{{ row.name }}</td>
-       <td>{{ row.price }}</td>
-     </tr>
-     {% endfor %}
-   </tbody>
-  </table>
-  ```
-- Також внесіть зміну, до `server/src/main.rs`
-  - Знадіть роутер у функції `main` та додайте до неї новий слях:
-  ```diff
-    let app = Router::new()
-        .route("/", get(index))
-        .route("/hello-world", get(hello_world))
-  +     .route("/crypto-top", get(crypto_top))
-        .route("/favicon.ico", get(favicon))
-        .nest_service("/static", ServeDir::new("server/static"));
-  ```
-  - ініціалізуйте функцію, яка відреагує на ваш запит та опишіть чого ви бажаєте
-  ```diff
-    async fn foo() {...}
-  + async fn crypto_top() -> Result<Html<String> StatusCode> {
-  + todo!()
-  + // Створив шаблон crypto-top-table.html
-  + // бажаю отримати топ криптовалют (місце, назва, ціна)
-  + }
-    async fn bar() {...}
-  ```
-  - якщо ваша функція потребує отримання данних на бекенд створіть об'єкт, що буде їх енкапсулювати, в нашому можливо
-    ```rust
-    #[derive(askama::Template)]
-    #[template(path = "crypto-top-table.html")]
-    struct CryptTopTable {
-        rows: Vec<CryptTopRow>,
-    }
+We welcome ideas and collaborations!
 
-    struct CryptTopRow {
-        name: u32,
-        price: u32,
-    }
-    ```
+- 💡 Have a better hedging strategy?
+- ⚙️ Want to offer data or upgrade integrations?
+- 📧 Reach us at **hello@hedgeyourfun.io**
